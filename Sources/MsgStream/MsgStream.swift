@@ -35,7 +35,7 @@ public protocol MsgSender {
         - data: The raw payload of the message (excluding the header)
         - recvBufSize: The size of the receiving buffer, defined by the higher level messaging protocol
      */
-    func send<T: MsgHasBytes>(_ data: T, recvBufSize: Int) throws -> Void;
+    func send<T: MsgHasBytes>(_ data: T, recvBufSize: Int) throws -> Void
 }
 
 /**
@@ -48,7 +48,7 @@ public protocol MsgReceiver {
         - data: The buffer to hold the decoded message payload, whose size is defined by the higher level messaging protocol
      - Returns: The size of the decoded message payload, less than or equal to the size of `data`
      */
-    func receive<T: MsgHasMutableBytes>(_ data: inout T) throws -> UInt64;
+    func receive<T: MsgHasMutableBytes>(_ data: inout T) throws -> UInt64
 }
 
 /**
@@ -69,19 +69,19 @@ public struct MsgStreamHeader {
      Compute the size of a msgstream header given the receiving buffer size
      - Parameter bufSize: The receiving buffer size
      */
-    public static func size(forMsgBufSize bufSize: UInt64) -> UInt8 {
-        return 1 + Self.byteWidthOf(bufSize);
+    public static func sizeForRecvBufOfSize(_ bufSize: UInt64) -> UInt8 {
+        return 1 + Self.byteWidthOf(bufSize)
     }
     
     private static func byteWidthOf(_ n: UInt64) -> UInt8 {
-        var width: UInt8 = 0;
-        var counter = n;
+        var width: UInt8 = 0
+        var counter = n
         while (counter > 0) {
-            width += 1;
-            counter /= 0x100;
+            width += 1
+            counter /= 0x100
         }
         
-        return width;
+        return width
     }
 }
 
@@ -89,7 +89,7 @@ public struct MsgStreamHeader {
  Send messages over an `OutputStream`
  */
 public class StreamMsgSender : MsgSender {
-    let stream: OutputStream;
+    let stream: OutputStream
     
     /**
     Initialize the sender with a stream
@@ -105,7 +105,7 @@ public class StreamMsgSender : MsgSender {
                 throw MsgStreamError.badData
             }
             
-            let headerSize = MsgStreamHeader.size(forMsgBufSize:UInt64(recvBufSize))
+            let headerSize = MsgStreamHeader.sizeForRecvBufOfSize(UInt64(recvBufSize))
             var header = [UInt8].init(repeating:0, count:Int(headerSize))
             header[0] = headerSize
             var n = buf.count
@@ -136,7 +136,7 @@ public class StreamMsgReceiver : MsgReceiver {
     
     public func receive<T: MsgHasMutableBytes>(_ data: inout T) throws -> UInt64 {
         return try data.withUnsafeMutableBytes() { (buf: UnsafeMutableRawBufferPointer) throws in
-            let headerSize = MsgStreamHeader.size(forMsgBufSize: UInt64(buf.count))
+            let headerSize = MsgStreamHeader.sizeForRecvBufOfSize(UInt64(buf.count))
             var header = [UInt8].init(repeating:0,count:Int(headerSize))
             
             guard let hdrPtr = (header.withUnsafeMutableBytes() { buf in buf.baseAddress }) else {

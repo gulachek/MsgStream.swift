@@ -3,53 +3,53 @@ import Foundation
 @testable import MsgStream
 
 func headerSizeAssert(bufSize: UInt64, expect: UInt8) -> Void {
-    let actual = MsgStreamHeader.size(forMsgBufSize: bufSize);
-    XCTAssertEqual(actual, expect);
+    let actual = MsgStreamHeader.sizeForRecvBufOfSize(bufSize)
+    XCTAssertEqual(actual, expect)
 }
 
 final class MsgStreamTests: XCTestCase {
     func testHeaderSize0Bytes() {
-        headerSizeAssert(bufSize: 0, expect: 1);
+        headerSizeAssert(bufSize: 0, expect: 1)
     }
     
     func testHeaderSize2Bytes() {
-        headerSizeAssert(bufSize: 0x01, expect: 2);
-        headerSizeAssert(bufSize: 0xff, expect: 2);
+        headerSizeAssert(bufSize: 0x01, expect: 2)
+        headerSizeAssert(bufSize: 0xff, expect: 2)
     }
     
     func testHeaderSize3Bytes() {
-        headerSizeAssert(bufSize: 0x0100, expect: 3);
-        headerSizeAssert(bufSize: 0xffff, expect: 3);
+        headerSizeAssert(bufSize: 0x0100, expect: 3)
+        headerSizeAssert(bufSize: 0xffff, expect: 3)
     }
     
     func testHeaderSize4Bytes() {
-        headerSizeAssert(bufSize: 0x010000, expect: 4);
-        headerSizeAssert(bufSize: 0xffffff, expect: 4);
+        headerSizeAssert(bufSize: 0x010000, expect: 4)
+        headerSizeAssert(bufSize: 0xffffff, expect: 4)
     }
     
     func testHeaderSize5Bytes() {
-        headerSizeAssert(bufSize: 0x01000000, expect: 5);
-        headerSizeAssert(bufSize: 0xffffffff, expect: 5);
+        headerSizeAssert(bufSize: 0x01000000, expect: 5)
+        headerSizeAssert(bufSize: 0xffffffff, expect: 5)
     }
     
     func testHeaderSize6Bytes() {
-        headerSizeAssert(bufSize: 0x0100000000, expect: 6);
-        headerSizeAssert(bufSize: 0xffffffffff, expect: 6);
+        headerSizeAssert(bufSize: 0x0100000000, expect: 6)
+        headerSizeAssert(bufSize: 0xffffffffff, expect: 6)
     }
     
     func testHeaderSize7Bytes() {
-        headerSizeAssert(bufSize: 0x010000000000, expect: 7);
-        headerSizeAssert(bufSize: 0xffffffffffff, expect: 7);
+        headerSizeAssert(bufSize: 0x010000000000, expect: 7)
+        headerSizeAssert(bufSize: 0xffffffffffff, expect: 7)
     }
     
     func testHeaderSize8Bytes() {
-        headerSizeAssert(bufSize: 0x01000000000000, expect: 8);
-        headerSizeAssert(bufSize: 0xffffffffffffff, expect: 8);
+        headerSizeAssert(bufSize: 0x01000000000000, expect: 8)
+        headerSizeAssert(bufSize: 0xffffffffffffff, expect: 8)
     }
     
     func testHeaderSize9Bytes() {
-        headerSizeAssert(bufSize: 0x0100000000000000, expect: 9);
-        headerSizeAssert(bufSize: 0xffffffffffffffff, expect: 9);
+        headerSizeAssert(bufSize: 0x0100000000000000, expect: 9)
+        headerSizeAssert(bufSize: 0xffffffffffffffff, expect: 9)
     }
     
     func testSendsAndReceivesSingleMessage() throws {
@@ -188,8 +188,8 @@ struct TestMessage : Codable, Equatable {
 class MemStreams {
     public var input: InputStream
     public var output: OutputStream
-    public var sender: StreamMsgSender;
-    public var receiver: StreamMsgReceiver;
+    public var sender: StreamMsgSender
+    public var receiver: StreamMsgReceiver
     
     init() {
         self.output = OutputStream.toMemory()
