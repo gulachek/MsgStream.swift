@@ -1,9 +1,5 @@
 import Foundation
 
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
-
 /**
  Describes an object that has an underlying buffer of mutable bytes
  */
