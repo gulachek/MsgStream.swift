@@ -4,11 +4,23 @@ import Foundation
 // https://docs.swift.org/swift-book
 
 
+/**
+ Describes an object that has an underlying buffer of mutable bytes
+ */
 public protocol MsgHasMutableBytes {
+    /**
+     Access the object's underlying mutable buffer of bytes
+     */
     mutating func withUnsafeMutableBytes<ResultType>(_ body: (UnsafeMutableRawBufferPointer) throws -> ResultType) rethrows -> ResultType
 }
 
+/**
+ Describes an object that has an underlying buffer of bytes
+ */
 public protocol MsgHasBytes {
+    /**
+     Access the object's underlying buffer of bytes
+     */
     func withUnsafeBytes<ResultType>(_ body: (UnsafeRawBufferPointer) throws -> ResultType) rethrows -> ResultType
 }
 
@@ -17,14 +29,35 @@ extension [UInt8] : MsgHasBytes, MsgHasMutableBytes {}
 extension ContiguousArray<UInt8> : MsgHasBytes, MsgHasMutableBytes {}
 extension ArraySlice<UInt8> : MsgHasBytes, MsgHasMutableBytes {}
 
+/**
+ An object that can encode and send msgstream messages
+ */
 public protocol MsgSender {
+    /**
+     Send a msgstream message
+     - Parameters:
+        - data: The raw payload of the message (excluding the header)
+        - recvBufSize: The size of the receiving buffer, defined by the higher level messaging protocol
+     */
     func send<T: MsgHasBytes>(_ data: T, recvBufSize: Int) throws -> Void;
 }
 
+/**
+ An object that can decode and receive msgstream messages
+ */
 public protocol MsgReceiver {
+    /**
+     Receive a msgstream message
+     - Parameters:
+        - data: The buffer to hold the decoded message payload, whose size is defined by the higher level messaging protocol
+     - Returns: The size of the decoded message payload, less than or equal to the size of `data`
+     */
     func receive<T: MsgHasMutableBytes>(_ data: inout T) throws -> UInt64;
 }
 
+/**
+ Represents an error encountered during msgstream operations
+ */
 public enum MsgStreamError : Error {
     case badData
     case writeFailed(Error?)
@@ -43,27 +76,29 @@ private func bytesToStore(_ n: UInt64) -> UInt8 {
     return bytes;
 }
 
+/**
+ Exposes low level functions for working with msgstream headers
+ */
 public struct MsgStreamHeader {
-    private var _buf: [UInt8]
-    
-    var buf: ContiguousBytes {
-        get { self._buf }
-    }
-    
-    init(bufSize: UInt64) {
-        let count = Self.size(forMsgBufSize:bufSize)
-        self._buf = [UInt8].init(repeating:0, count:Int(count))
-        self._buf[0] = count
-    }
-    
+    /**
+     Compute the size of a msgstream header given the receiving buffer size
+     - Parameter bufSize: The receiving buffer size
+     */
     public static func size(forMsgBufSize bufSize: UInt64) -> UInt8 {
         return bytesToStore(bufSize) + 1;
     }
 }
 
+/**
+ Send messages over an `OutputStream`
+ */
 public class StreamMsgSender : MsgSender {
     let stream: OutputStream;
     
+    /**
+    Initialize the sender with a stream
+     - Parameter stream: The stream to send messages through
+     */
     init(stream: OutputStream) {
         self.stream = stream
     }
@@ -87,27 +122,18 @@ public class StreamMsgSender : MsgSender {
             try writeN(stream:self.stream, buf:baseAddress, count:buf.count)
         }
     }
-    
-    private func pumpErr() throws -> Void {
-        if let err = self.stream.streamError {
-            throw err
-        }
-    }
-    
-    public func open() throws -> Void {
-        self.stream.open()
-        try self.pumpErr()
-    }
-    
-    public func close() throws -> Void {
-        self.stream.close()
-        try self.pumpErr()
-    }
 }
 
+/**
+ Receive messages through an `InputStream`
+ */
 public class StreamMsgReceiver : MsgReceiver {
     public let stream: InputStream
     
+    /**
+     Initialize the receiver with a stream object
+     - Parameter stream: The stream to receive messages through
+     */
     init(stream: InputStream) {
         self.stream = stream
     }
