@@ -61,17 +61,6 @@ public enum MsgStreamError : Error {
     case msgTooBig(msgSize: UInt64, bufSize: UInt64)
 }
 
-private func bytesToStore(_ n: UInt64) -> UInt8 {
-    var bytes: UInt8 = 0;
-    var counter = n;
-    while (counter > 0) {
-        bytes += 1;
-        counter /= 0x100;
-    }
-    
-    return bytes;
-}
-
 /**
  Exposes low level functions for working with msgstream headers
  */
@@ -81,7 +70,18 @@ public struct MsgStreamHeader {
      - Parameter bufSize: The receiving buffer size
      */
     public static func size(forMsgBufSize bufSize: UInt64) -> UInt8 {
-        return bytesToStore(bufSize) + 1;
+        return 1 + Self.byteWidthOf(bufSize);
+    }
+    
+    private static func byteWidthOf(_ n: UInt64) -> UInt8 {
+        var width: UInt8 = 0;
+        var counter = n;
+        while (counter > 0) {
+            width += 1;
+            counter /= 0x100;
+        }
+        
+        return width;
     }
 }
 
